@@ -4,12 +4,12 @@
 
 ### Super Simple Application Architecture you can learn in minutes.
 
-We believe we should compose software from components.
-
 > Nobody is really smart enough to program computers.
-> - Steve McConnell (Code Complete 2.0)
+> 
+> Steve McConnell (Code Complete 2.0)
 
-Here's our base expectations from those elements:
+
+We believe we should compose software from components that are: 
 
 - accurately named,
 - simple,
@@ -25,7 +25,7 @@ Here's our base expectations from those elements:
 - Passive Components (ex. Renderable)
 - Views (ex. UILabel)
 
-## Renderable
+## 🖼 Renderable
 
 > **Renderable**
 > (*noun*)
@@ -93,3 +93,94 @@ extension BannerView: BannerRendering {
 }
 ```
 
+## 🛰 Interactor
+
+> **Interactor**
+> (*noun*)
+> 
+> Component answering the question: What should I do in reaction to user action. 
+
+### Definitions
+
+### TL;DR
+
+Interactor is a final class that ViewController owns, which performs actions in reaction to user input - gestures, text input, device movement, geographical location change etc.
+
+#### Interactor is: 
+- active component (has a lifecycle), 
+- final class (1),
+- can use other components for data retrieval etc.
+- should render methods on weakly held views.
+
+*(1) There is no good reason for inheritance of custom classes, ever.*
+
+#### ViewControllers:
+
+- can have many Interactors
+- should OWN interactors and see them via protocol,
+
+### Example
+
+**Step 1 - Create Interactor protocols:**
+
+```swift
+protocol PodBayDoorsInteracting: class {
+	func use(_ banner: BannerRendering)
+	func didTapMainButton()
+}
+```
+
+**Step 2 - Add Interactor implementation:**
+
+```swift
+final class PodBayDoorsInteractor {
+	// Why FU? We do want to crash if use() is not called before banner is used.
+	fileprivate weak var banner: BannerRendering! 
+}
+
+extension PodBayDoorsInteractor: PodBayDoorsInteracting {
+	private let killDave = true
+	private enum Strings {
+		static let halsAnswer = "I know you and Frank were planning to disconnect me, and that is something I cannot allow to happen."
+	}
+
+    func didTapMainButton() {
+    	if killDave { // Just to show the business logic is resolved here.
+			banner.render(BannerRenderable(message: Strings.halsAnswer))
+		} else {
+			// Open doors.
+		}
+    }
+    
+    func use(_ banner: BannerRendering) {
+		self.banner = banner
+	}
+}
+```
+
+**Step 3 - Use it in ViewController (via nib + init):**
+
+```swift
+final class HAL9000ViewController: UIViewController {
+
+    private static let nibName: String = "HAL9000ViewController"
+
+    fileprivate let interactor: PodBayDoorsInteracting
+
+    @IBOutlet private var bannerView: BannerRendering!
+
+    init(interactor: PodBayDoorsInteracting) {
+        self.interactor = interactor
+        super.init(nibName: HAL9000ViewController.nibName, bundle: nil)
+    }
+    
+    override func awakeFromNib() {
+        super.awakeFromNib()
+        interactor.use(bannerView)
+    }
+    
+    @IBAction private func didTapMainButton() {
+        interactor.didTapMainButton()
+    }
+}
+```
