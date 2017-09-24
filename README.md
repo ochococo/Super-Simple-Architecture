@@ -104,9 +104,9 @@ extension BannerView: BannerRendering {
 
 ### TL;DR
 
-Interactor is a final class that ViewController owns, which performs actions in reaction to user input - gestures, text input, device movement, geographical location change etc.
+Interactor is a final class that ViewController or View owns, which performs actions in reaction to user input - gestures, text input, device movement, geographical location change etc.
 
-#### Interactor is: 
+#### Interactor: 
 - active component (has a lifecycle), 
 - final class (1),
 - can use other components for data retrieval etc.
@@ -114,10 +114,11 @@ Interactor is a final class that ViewController owns, which performs actions in 
 
 *(1) There is no good reason for inheritance of custom classes, ever.*
 
-#### ViewControllers:
+#### ViewControllers and Views:
 
-- can have many Interactors
-- should OWN interactors and see them via protocol,
+- can have many Interactors,
+- should OWN interactor and see it via protocol,
+- subviews of VC could own separate Interactor but it’s not mandatory for simple VC.
 
 ### Example
 
@@ -134,17 +135,18 @@ protocol PodBayDoorsInteracting: class {
 
 ```swift
 final class PodBayDoorsInteractor {
-	// Why FU? We do want to crash if use() is not called before banner is used.
-	fileprivate weak var banner: BannerRendering! 
+  fileprivate let killDave = true
+  fileprivate weak var banner: BannerRendering? 
 }
 
 extension PodBayDoorsInteractor: PodBayDoorsInteracting {
-	private let killDave = true
 	private enum Strings {
 		static let halsAnswer = "I know you and Frank were planning to disconnect me, and that is something I cannot allow to happen."
 	}
 
     func didTapMainButton() {
+       guard let banner = banner else { fatalError() }
+       
     	if killDave { // Just to show the business logic is resolved here.
 			banner.render(BannerRenderable(message: Strings.halsAnswer))
 		} else {
