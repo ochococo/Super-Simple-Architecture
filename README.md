@@ -109,8 +109,9 @@ Interactor is a final class that ViewController or View owns, which performs act
 #### Interactor: 
 - active component (has a lifecycle), 
 - final class (1),
-- can use other components for data retrieval etc.
-- should render methods on weakly held views.
+- can use other components for data retrieval,
+- can convert Model(s) to Renderable(s) ex. via map,
+- should call render methods on weakly held views (seen via protocol).
 
 *(1) There is no good reason for inheritance of custom classes, ever.*
 
