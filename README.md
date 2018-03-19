@@ -23,7 +23,7 @@ We believe we should compose software from components that are:
 
 ## Types:
 
-- Active Components (ex. Interactor, Navigation, Mediator etc.)
+- Active Components (ex. Interaction, Navigation, Mediator etc.)
 - Passive Components (ex. Renderable)
 - Views (ex. UILabel)
 
@@ -95,9 +95,9 @@ extension BannerView: BannerRendering {
 }
 ```
 
-## 🛰 Interactor
+## 🛰 Interaction
 
-> **Interactor**
+> **Interaction **
 > (*noun*)
 > 
 > Component answering the question: What should I do in reaction to user action. 
@@ -106,9 +106,9 @@ extension BannerView: BannerRendering {
 
 ### TL;DR
 
-Interactor is a final class that ViewController or View owns, which performs actions in reaction to user input - gestures, text input, device movement, geographical location change etc.
+Interaction is a final class that ViewController or View owns, which performs actions in reaction to user input - gestures, text input, device movement, geographical location change etc.
 
-#### Interactor: 
+#### Interaction: 
 - active component (has a lifecycle), 
 - final class (1),
 - can use other components for data retrieval,
@@ -119,13 +119,13 @@ Interactor is a final class that ViewController or View owns, which performs act
 
 #### ViewControllers and Views:
 
-- can have many Interactors,
-- should OWN interactor and see it via protocol,
-- subviews of VC could own separate Interactor but it’s not mandatory for simple VC.
+- can have many Interactions for separate functions,
+- should OWN Interaction and see it via protocol,
+- subviews of VC could own separate Interaction but it’s not mandatory for simple VC.
 
 ### Example
 
-**Step 1 - Create Interactor protocols:**
+**Step 1 - Create Interaction protocols:**
 
 ```swift
 protocol PodBayDoorsInteracting: class {
@@ -134,15 +134,15 @@ protocol PodBayDoorsInteracting: class {
 }
 ```
 
-**Step 2 - Add Interactor implementation:**
+**Step 2 - Add Interaction implementation:**
 
 ```swift
-final class PodBayDoorsInteractor {
+final class PodBayDoorsInteraction {
     fileprivate let killDave = true
     fileprivate weak var banner: BannerRendering?
 }
 
-extension PodBayDoorsInteractor: PodBayDoorsInteracting {
+extension PodBayDoorsInteraction: PodBayDoorsInteracting {
     private enum Strings {
         static let halsAnswer = "I know you and Frank were planning to disconnect me, and that is something I cannot allow to happen."
     }
@@ -170,22 +170,22 @@ final class HAL9000ViewController: UIViewController {
     
     private static let nibName: String = "HAL9000ViewController"
     
-    fileprivate let interactor: PodBayDoorsInteracting
+    fileprivate let podBayInteraction: PodBayDoorsInteracting
     
     @IBOutlet private var bannerView: BannerRendering!
     
-    init(interactor: PodBayDoorsInteracting) {
-        self.interactor = interactor
+    init(podBayInteraction: PodBayDoorsInteracting) {
+        self.podBayInteraction = podBayInteraction
         super.init(nibName: HAL9000ViewController.nibName, bundle: nil)
     }
     
     override func awakeFromNib() {
         super.awakeFromNib()
-        interactor.use(bannerView)
+        podBayInteraction.use(bannerView)
     }
     
     @IBAction private func didTapMainButton() {
-        interactor.didTapMainButton()
+        podBayInteraction.didTapMainButton()
     }
 }
 ```
