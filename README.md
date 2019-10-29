@@ -1,6 +1,6 @@
 ![Super Simple Architecture](SuperSimple.png)
 
-![Swift3](https://img.shields.io/badge/%20in-swift%203.0-orange.svg)
+![Swift5](https://img.shields.io/badge/%20in-swift%205.0-orange.svg)
 
 # Super Simple
 
@@ -29,7 +29,7 @@ We believe we should compose software from components that are:
 
 ## 🖼 Renderable
 
-> **Renderable**
+> Renderable
 > (*noun*)
 > 
 > Something (information) that view is able to show.
@@ -40,7 +40,7 @@ We believe we should compose software from components that are:
 
 Renderable is a struct that you pass to a View which should show its contents.
 
-#### Renderable is: 
+#### Renderable is:
 - dead, 
 - immutable struct,
 - threadsafe,
@@ -53,7 +53,7 @@ struct BannerRenderable {
 }
 ```
 
-#### View should: 
+#### View should:
 - always look the same if ordered to render the same renderable,
 - have code answering to the question: "how should I look?",
 - have no state,
@@ -76,7 +76,7 @@ struct BannerRenderable {
 **Step 2 - Expose View ability in Protocol:**
 
 ```swift
-protocol BannerRendering: class {
+protocol BannerRendering: AnyObject {
     func render(_ renderable: BannerRenderable)
 }
 ```
@@ -97,7 +97,7 @@ extension BannerView: BannerRendering {
 
 ## 🛰 Interaction
 
-> **Interaction **
+> Interaction
 > (*noun*)
 > 
 > Component answering the question: What should I do in reaction to user action. 
@@ -108,7 +108,7 @@ extension BannerView: BannerRendering {
 
 Interaction is a final class that ViewController or View owns, which performs actions in reaction to user input - gestures, text input, device movement, geographical location change etc.
 
-#### Interaction: 
+#### Interaction:
 - active component (has a lifecycle), 
 - final class (1),
 - can use other components for data retrieval,
@@ -128,7 +128,7 @@ Interaction is a final class that ViewController or View owns, which performs ac
 **Step 1 - Create Interaction protocols:**
 
 ```swift
-protocol PodBayDoorsInteracting: class {
+protocol PodBayDoorsInteracting: AnyObject {
     func use(_ banner: BannerRendering)
     func didTapMainButton()
 }
@@ -153,7 +153,7 @@ extension PodBayDoorsInteraction: PodBayDoorsInteracting {
         if killDave { // Just to show the business logic is resolved here.
             banner.render(BannerRenderable(message: Strings.halsAnswer))
         } else {
-            // Open doors.
+            // Open doors. Not implemented :P 
         }
     }
 
@@ -168,15 +168,13 @@ extension PodBayDoorsInteraction: PodBayDoorsInteracting {
 ```swift
 final class HAL9000ViewController: UIViewController {
     
-    private static let nibName: String = "HAL9000ViewController"
-    
     fileprivate let podBayInteraction: PodBayDoorsInteracting
     
     @IBOutlet private var bannerView: BannerRendering!
     
     init(podBayInteraction: PodBayDoorsInteracting) {
         self.podBayInteraction = podBayInteraction
-        super.init(nibName: HAL9000ViewController.nibName, bundle: nil)
+        super.init(nibName: nil, bundle: nil)
     }
     
     override func awakeFromNib() {
@@ -188,4 +186,54 @@ final class HAL9000ViewController: UIViewController {
         podBayInteraction.didTapMainButton()
     }
 }
+```
+
+## 🛠 Assembler
+
+> Assembler
+> (*noun*)
+> 
+> Assembler is assembling dependencies and instantiating one component.
+
+### Definitions
+
+### TL;DR
+
+Its purpose is to assemble dependencies for one class or struct. 
+
+#### Assembler:
+- a struct,
+- as only one method called `assemble()`. 
+- can call ONLY ONE initializer directly,
+- will call other Assemblers to instantiate dependencies.
+
+### Example
+
+```swift
+protocol PodBayDoorsInteractionAssembling {
+	func assemble() -> PodBayDoorsInteracting
+}
+
+struct PodBayDoorsInteractionAssembler {
+    func assemble() -> PodBayDoorsInteracting {
+        return PodBayDoorsInteraction()
+    }
+}
+
+protocol DiscoveryOneAssembling {
+    func assemble() -> UIViewController
+}
+
+struct DiscoveryOneAssembler: DiscoveryOneAssembling {
+
+    let interactionAssembler: PodBayDoorsInteractionAssembling
+
+    func assemble() -> UIViewController {
+        return DiscoveryOneViewController(interaction: interactionAssembler.assemble())
+    }
+}
+
+let interactionAssembler = PodBayDoorsInteractionAssembler()
+let viewControllerAssembler = DiscoveryOneAssembler(interactionAssembler: interactionAssembler)
+let viewController = viewControllerAssembler.assemble()
 ```
