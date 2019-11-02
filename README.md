@@ -312,3 +312,7 @@ final class DiscoveryOneNavigation: DiscoveryOneNavigating {
     }
 }
 ```
+
+# Additional assets
+
+- [Cookie Cutter Template](https://github.com/bart-g/Super-Simple-Module-Template) by my friend [@bart-g](https://github.com/bart-g)
