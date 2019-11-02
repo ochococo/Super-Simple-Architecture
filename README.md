@@ -6,10 +6,11 @@
 
 ### Application Architecture you can learn in minutes.
 
+## Why?
+
 > Nobody is really smart enough to program computers.
 > 
 > Steve McConnell (Code Complete 2.0)
-
 
 We believe we should compose software from components that are: 
 
@@ -41,11 +42,9 @@ We believe we should compose software from components that are:
 Renderable is a struct that you pass to a View which should show its contents.
 
 #### Renderable is:
-- dead, 
+- Passive, 
 - immutable struct,
-- threadsafe,
 - often converted from model or models,
-- responsible for formatting data for presentation text (ex. dates, numbers).
 
 ```swift
 struct BannerRenderable {
@@ -55,7 +54,7 @@ struct BannerRenderable {
 
 #### View should:
 - always look the same if ordered to render the same renderable,
-- have code answering to the question: "how should I look?",
+- have code answering to one question: "how should I look?",
 - have no state,
 - accept infinite number of renderables in random order.
 
@@ -67,8 +66,8 @@ struct BannerRenderable {
 struct BannerRenderable {
     let message: String
     
-    init(what: String) {
-        message = "Only 🍎 has \(what)" // #courage ;)
+    init(message: String) {
+        self.message = message
     }
 }
 ```
@@ -109,17 +108,18 @@ extension BannerView: BannerRendering {
 Interaction is a final class that ViewController or View owns, which performs actions in reaction to user input - gestures, text input, device movement, geographical location change etc.
 
 #### Interaction:
-- active component (has a lifecycle), 
-- final class (1),
+- Active component (has a lifecycle), 
+- final class,
 - can use other components for data retrieval,
-- can convert Model(s) to Renderable(s) ex. via map,
-- should call render methods on weakly held views (seen via protocol).
+- should be literally between two actions, the one causing and the one caused,
+- can call navigation methods when other ViewController should be presented,
+- can call render methods on weakly held views (seen via protocol).
 
-*(1) There is no good reason for inheritance of custom classes, ever.*
+📌 RULE: There is no good reason for inheritance of custom classes, ever.
 
 #### ViewControllers and Views:
 
-- can have many Interactions for separate functions,
+- Can have many Interactions for separate functions,
 - should OWN Interaction and see it via protocol,
 - subviews of VC could own separate Interaction but it’s not mandatory for simple VC.
 
@@ -135,6 +135,8 @@ protocol PodBayDoorsInteracting: AnyObject {
 ```
 
 **Step 2 - Add Interaction implementation:**
+
+📌 RULE: Do not tell Interaction what to do, tell what happened, it should decide what should happen next.
 
 ```swift
 final class PodBayDoorsInteraction {
@@ -163,10 +165,10 @@ extension PodBayDoorsInteraction: PodBayDoorsInteracting {
 }
 ```
 
-**Step 3 - Use it in ViewController (via nib + init):**
+**Step 3 - Use it in ViewController (via nib):**
 
 ```swift
-final class HAL9000ViewController: UIViewController {
+final class DiscoveryOneViewController: UIViewController {
     
     fileprivate let podBayInteraction: PodBayDoorsInteracting
     
@@ -193,7 +195,7 @@ final class HAL9000ViewController: UIViewController {
 > Assembler
 > (*noun*)
 > 
-> Assembler is assembling dependencies and instantiating one component.
+> Assembler is gathering dependencies and injecting them into a single instantiated component.
 
 ### Definitions
 
@@ -203,11 +205,15 @@ Its purpose is to assemble dependencies for one class or struct.
 
 #### Assembler:
 - a struct,
-- as only one method called `assemble()`. 
+- has only one method called `assemble()`. 
 - can call ONLY ONE initializer directly,
 - will call other Assemblers to instantiate dependencies.
 
 ### Example
+
+**Step 1 - Create Interaction protocols:**
+
+📌 RULE: When assembled component is dependent on other instances, you should use it's Assemblers, do not initialize more than one class directly.
 
 ```swift
 protocol PodBayDoorsInteractionAssembling {
@@ -236,4 +242,73 @@ struct DiscoveryOneAssembler: DiscoveryOneAssembling {
 let interactionAssembler = PodBayDoorsInteractionAssembler()
 let viewControllerAssembler = DiscoveryOneAssembler(interactionAssembler: interactionAssembler)
 let viewController = viewControllerAssembler.assemble()
+```
+## 🧭 Navigation
+
+> **Navigation**
+> (*noun*)
+> 
+> Component responsible for presenting views (here: View Controllers).
+
+### Definitions
+
+### TL;DR
+
+Interaction may need to open another View Controller in response to user's action, it has to use Navigation component to do that.
+
+#### Navigation is:
+- A class,
+- owned by Interaction,
+- can push or open views modally,
+- will use Assemblers to create ViewControllers to show.
+
+### Example
+
+📌 RULE: We should never pass classes directly, always via protocol or Adapter.
+
+**NavigationControlling.swift**
+```swift
+protocol NavigationControlling: AnyObject {
+    func pushViewController(_ viewController: UIViewController, animated: Bool)
+}
+
+// `NavigationControlling` is a protocol convering (some) methods of `UINavigationController`
+extension UINavigationController: NavigationControlling { }
+```
+
+**Step 1 - Create Navigating protocol:**
+
+📌 RULE: When A uses B but A is not an owner of B, pass B via `use(_)` method, not in `init`.
+
+**PodBayNavigation.swift**
+```swift
+protocol DiscoveryOneNavigating: AnyObject {
+    func use(_ navigationController: NavigationControlling)
+    func presentDiscoveryOneInterface()
+}
+```
+
+**Step 2 - Implement Navigation:**
+
+**DiscoveryOneNavigation.swift**
+```swift
+final class DiscoveryOneNavigation: DiscoveryOneNavigating {
+
+    private let discoveryAssembler: DiscoveryOneAssembling
+    private weak var navigationController: NavigationControlling?
+
+    init(navigationController: NavigationControlling, discoveryAssembler: DiscoveryOneAssembling) {
+        self.navigationController = navigationController
+        self.discoveryAssembler = discoveryAssembler
+    }
+
+    func use(_ navigationController: NavigationControlling) {
+        self.navigationController = navigationController
+    }
+
+    func presentDiscoveryOneInterface() {
+        let discovery = discoveryAssembler.assemble()
+        navigationController.pushViewController(discovery, animated: true)
+    }
+}
 ```
