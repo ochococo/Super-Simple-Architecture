@@ -99,7 +99,7 @@ extension BannerView: BannerRendering {
 > Interaction
 > (*noun*)
 > 
-> Component answering the question: What should I do in reaction to user action. 
+> Component answering the question: What should I do in reaction to user's action. 
 
 ### Definitions
 
@@ -204,7 +204,7 @@ final class DiscoveryOneViewController: UIViewController {
 Its purpose is to assemble dependencies for one class or struct. 
 
 #### Assembler:
-- a struct,
+- an enum,
 - has only one method called `assemble()`. 
 - can call ONLY ONE initializer directly,
 - will call other Assemblers to instantiate dependencies.
